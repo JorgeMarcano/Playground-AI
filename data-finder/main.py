@@ -3,6 +3,7 @@ import numpy
 print("Done importing")
 
 totalLines = 0
+linesCount = 0
 
 def getMinutesFromClose(date):
     #minutes from 4pm -> 16h
@@ -20,7 +21,7 @@ def getMonth(stock, start_day, startMonth, startMonthDays):
     end_time = "2020-" + str(end_month) + "-" + str(end_day + 1)
     print(stock, "From:", start_time, "To:", end_time)
     #first week
-    wholeData = yf.download(stock, start=start_time, end=end_time, interval="1m")
+    wholeData = yf.download(stock, start=start_time, end=end_time, interval="1m", group_by='ticker')
 
     #next 3 weeks
     for i in range(1, 4):
@@ -32,7 +33,7 @@ def getMonth(stock, start_day, startMonth, startMonthDays):
         end_time = "2020-" + str(end_month) + "-" + str(end_day + 1)
 
         print(stock, "From:", start_time, "To:", end_time)
-        wholeData = wholeData.append(yf.download(stock, start=start_time, end=end_time, interval="1m"))
+        wholeData = wholeData.append(yf.download(stock, start=start_time, end=end_time, interval="1m", group_by='ticker'))
 
     #next 2 days
     start_day = (start_day + 7) % startMonthDays
@@ -43,13 +44,13 @@ def getMonth(stock, start_day, startMonth, startMonthDays):
     end_time = "2020-" + str(end_month) + "-" + str(end_day + 1)
 
     print(stock, "From:", start_time, "To:", end_time)
-    wholeData = wholeData.append(yf.download(stock, start=start_time, end=end_time, interval="1m"))
+    wholeData = wholeData.append(yf.download(stock, start=start_time, end=end_time, interval="1m", group_by='ticker'))
 
     return wholeData
 
 #skips the first day
 def parseData(data, file, answerFile):
-    global totalLines
+    global totalLines, linesCount
     
     totalRows = len(data['Open'])
     dates = data['Open'].index
@@ -57,9 +58,16 @@ def parseData(data, file, answerFile):
     currDay = dates[0].day
     dayOpen = data['Open'][0]
     dayClose = data['Close'][0]
+
+    dayCount = 0
+    
     for time in range(1, totalRows):
         #if change of day, save open
         if (dates[time].day != currDay):
+            
+            print("Day", dates[time].day, dayCount)
+            dayCount = 0
+            
             currDay = dates[time].day
             dayOpen = data['Open'][time]
             dayClose = data['Close'][time-1]
@@ -69,20 +77,20 @@ def parseData(data, file, answerFile):
             #get current
             currVal = data['Open'][time]
             #save day open
-            string = str((currVal - dayOpen) / currVal) + ", "
+            string = str(100 * (currVal - dayOpen) / currVal) + ", "
 
-            string += str(currVal) + ", "
+            #string += str(currVal) + ", "
 
-            #save current and past 10 minutes
+            #save past 10 minutes
             for i in range(1, 11):
-                string += str((currVal - data['Open'][time - i]) / currVal) + ", "
+                string += str(100 * (currVal - data['Open'][time - i]) / currVal) + ", "
 
             #save 15, 30, 45, 60 min ago
             for i in range(15, 61, 15):
-                string += str((currVal - data['Open'][time - i]) / currVal) + ", "
+                string += str(100 * (currVal - data['Open'][time - i]) / currVal) + ", "
 
             #save last day close
-            string += str((currVal - dayClose) / currVal) + ", "
+            string += str(100 * (currVal - dayClose) / currVal) + ", "
 
             #save 1d ago
 
@@ -98,28 +106,43 @@ def parseData(data, file, answerFile):
             if (time+10 >= totalRows):
                 continue
             
-            answerStr = str((currVal - data['Open'][time + 5]) / currVal) + ", "
-            answerStr += str((currVal - data['Open'][time + 10]) / currVal) + "\n"
+            answerStr = str(100 * (currVal - data['Open'][time + 5]) / currVal) + ", "
+            answerStr += str(100 * (currVal - data['Open'][time + 10]) / currVal) + "\n"
 
             file.write(string)
             answerFile.write(answerStr)
             totalLines += 1
+            linesCount += 1
+
+            dayCount += 1
 
 #data = yf.download("AAPL", period="7d", interval="1m")
 
-stocks = ["AAPL", "GOOGL", "MCD", "WMT", "IGA", "SBUX", "BBY", "URBN", "HD", "NFLX", "AMZN"]
+stocks = ["AAPL", "GOOGL", "MCD", "WMT", "IGA", "SBUX", "BBY", "URBN", "HD", "NFLX", "AMZN", "FB", "EBAY", "FDX", "F", "GM", "GE", "AMD", "INTC", "IBM"]
 
-f = open("../data.txt", "w")
-answers = open("../answers.txt", "w")
+currIndx = 0
+f = open("../data/data.txt", "w")
+answers = open("../data/answers.txt", "w")
 
 for i in stocks:
     #save one day before for the close of that day
-    print("Getting", "2020-04-21")
-    data = yf.download(i, start="2020-04-21", end="2020-04-22")
-    data = data.append(getMonth(i, 22, 4, 30))
+    print("Getting", "2020-04-22")
+    data = yf.download(i, start="2020-04-22", end="2020-04-23")
+    data = data.append(getMonth(i, 23, 4, 30))
     print("Parsing Data")
     parseData(data, f, answers)
-    print("Done Parsing")
+    print("Done Parsing", totalLines, "entries")
+
+    if linesCount > 20000:
+        print("Changing File to #", currIndx)
+        linesCount = 0
+        f.close()
+        answers.close()
+
+        f = open("../data/data" + str(currIndx) + ".txt", "w")
+        answers = open("../data/answers" + str(currIndx) + ".txt", "w")
+
+        currIndx += 1
 
 print("A total of", totalLines, "entries have been saved")
 f.close()
