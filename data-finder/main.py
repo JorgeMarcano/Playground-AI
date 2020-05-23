@@ -72,10 +72,17 @@ def parseData(data, file, answerFile):
             dayOpen = data['Open'][time]
             dayClose = data['Close'][time-1]
 
+            if str(dayOpen) == 'nan':
+                print("DAYOPEN", data['Open'][time-1 : time+1])
+
         #first 60 minutes, skip (if not 10h30) or first day or if less than 10 minutes from closing
-        if ((dates[time].hour > 11 or (dates[time].hour == 10 and dates[time].minute > 31)) and getMinutesFromClose(dates[time]) > 11):
+        if ((dates[time].hour > 11 or (dates[time].hour == 10 and dates[time].minute > 35)) and getMinutesFromClose(dates[time]) > 15):
             #get current
             currVal = data['Open'][time]
+
+            if str(currVal) == 'nan':
+                print("currVal")
+            
             #save day open
             string = str(100 * (currVal - dayOpen) / currVal) + ", "
 
@@ -86,7 +93,7 @@ def parseData(data, file, answerFile):
                 string += str(100 * (currVal - data['Open'][time - i]) / currVal) + ", "
 
             #save 15, 30, 45, 60 min ago
-            for i in range(15, 61, 15):
+            for i in [15, 30, 45, 60]:
                 string += str(100 * (currVal - data['Open'][time - i]) / currVal) + ", "
 
             #save last day close
@@ -121,14 +128,15 @@ def parseData(data, file, answerFile):
 stocks = ["AAPL", "GOOGL", "MCD", "WMT", "IGA", "SBUX", "BBY", "URBN", "HD", "NFLX", "AMZN", "FB", "EBAY", "FDX", "F", "GM", "GE", "AMD", "INTC", "IBM"]
 
 currIndx = 0
-f = open("../data/data.txt", "w")
-answers = open("../data/answers.txt", "w")
+f = open("../data/data0.txt", "w")
+answers = open("../data/answers0.txt", "w")
 
 for i in stocks:
     #save one day before for the close of that day
-    print("Getting", "2020-04-22")
-    data = yf.download(i, start="2020-04-22", end="2020-04-23")
-    data = data.append(getMonth(i, 23, 4, 30))
+    print("Getting", "2020-04-23")
+    data = yf.download(i, start="2020-04-23", end="2020-04-24")
+    data = data.append(getMonth(i, 24, 4, 30))    
+    
     print("Parsing Data")
     parseData(data, f, answers)
     print("Done Parsing", totalLines, "entries")

@@ -2,14 +2,12 @@ import yfinance as yf
 import numpy
 print("Done importing")
 
-data = yf.download("TSX:CTC.A", start="2020-04-21", end="2020-04-28", interval="1d")
-#days = yf.download("AAPL", period="5d")
+stocks = ["AAPL", "GOOGL", "MCD", "WMT", "IGA", "SBUX", "BBY", "URBN", "HD", "NFLX", "AMZN", "FB", "EBAY", "FDX", "F", "GM", "GE", "AMD", "INTC", "IBM"]
 
-#dates = data['Open'].index
+for i in stock:
 
-#print(days.index[0])
+    data = yf.download("TSX:CTC.A", start="2020-04-21", end="2020-04-28", interval="1d")
 
-#print(days['Open'].at_time(dates[0].normalize().time()))
-
-
-print(data)
+    for i in data:
+        if data[i].isnull().values.any():
+            print(data[i])
