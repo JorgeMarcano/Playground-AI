@@ -1,11 +1,11 @@
 import numpy as np
-
+import pickle
 import random
 LEAKY = 0.1
 INPUTS = 17
 OUTPUTS = 2
 SIZES = [INPUTS, 50, 50, 50, OUTPUTS]
-LEARNING_RATE = 0.5
+LEARNING_RATE = 0.0005
 eta = LEARNING_RATE
 BATCH_SIZE = 100
 TEST_SIZE = 10
@@ -103,6 +103,9 @@ print("Loading data")
 examples = np.loadtxt('../data/data' + files[0] + '.txt', delimiter=", ")
 answers = np.loadtxt('../data/answers' + files[0] + '.txt', delimiter=", ")
 sizes = len(examples)
+INPUTS = len(examples[0])
+OUTPUTS = len(answers[0])
+SIZES = [INPUTS, 50, 50, 50, OUTPUTS]
 print("Done Loading")
 
 print("Initializing NN")
@@ -135,4 +138,10 @@ while (True):
             currBatch = order[TOTAL_SIZE * i + BATCH_SIZE : TOTAL_SIZE * (i + 1)]
             
             print("Trial", i, ":", net.testBatch(*zip(*currBatch)), "% off")
+
+    #after going thru the entire training set, save the current NN
+    print("Saving backup")
+    with open('backup.pkl', 'wb') as outfile:
+        pickle.dump([net.weights, net.biases], outfile, pickle.HIGHEST_PROTOCOL)
+    
     
