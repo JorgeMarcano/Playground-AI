@@ -2,13 +2,13 @@ import numpy as np
 
 import random
 LEAKY = 0.1
-INPUTS = 18
+INPUTS = 17
 OUTPUTS = 2
-SIZES = [INPUTS, 100, 100, OUTPUTS]
-LEARNING_RATE = 1
+SIZES = [INPUTS, 50, 50, 50, OUTPUTS]
+LEARNING_RATE = 0.5
 eta = LEARNING_RATE
 BATCH_SIZE = 100
-TEST_SIZE = 1
+TEST_SIZE = 10
 TOTAL_SIZE = BATCH_SIZE + TEST_SIZE
 
 def actfct(x):
@@ -31,7 +31,7 @@ def dcostfct(z, y):
     return (z-y)
 
 def percentOff(z, y):
-    return np.sum(100 * np.divide(np.abs(z - y), np.maximum(0.0000001, np.abs(y))))
+    return 100 * np.sum(np.divide(np.abs(z - y), np.maximum(y, 0.0005)))
 
 class NN():
     def __init__(self):
@@ -86,21 +86,22 @@ class NN():
         self.weights = [w-(eta/len(Xs))*nw for w, nw in zip(self.weights, nabla_w)]
         self.biases = [b-(eta/len(Xs))*nb for b, nb in zip(self.biases, nabla_b)]
 
-
     def testBatch(self, Xs, Ys):
         averageOff = 0
         for x, y in zip(Xs, Ys):
             As, Zs = self.ff(x)
-
+                
             averageOff += percentOff(As[-1], y[np.newaxis].T)
 
         averageOff /= len(Xs)
 
         return averageOff
 
+files = ['0', '1', '2', '3']
+
 print("Loading data")
-examples = np.loadtxt('../data.txt', delimiter=", ")
-answers = np.loadtxt('../answers.txt', delimiter=", ")
+examples = np.loadtxt('../data/data' + files[0] + '.txt', delimiter=", ")
+answers = np.loadtxt('../data/answers' + files[0] + '.txt', delimiter=", ")
 sizes = len(examples)
 print("Done Loading")
 
@@ -110,18 +111,28 @@ print("Done Initializing")
 
 currRound = -1
 while (True):
-    print("Shuffling data")
-    order = list(zip(examples, answers))
-    random.shuffle(order)
-    print("Done Shuffling")
-    currRound += 1
-    print("Starting Test Round:", currRound)
-    for i in range(int(sizes / TOTAL_SIZE)):
-        #run one batch
-        #perform one test
-        currBatch = order[TOTAL_SIZE * i : TOTAL_SIZE * i + BATCH_SIZE]
-        net.miniBatch(*zip(*currBatch))
+    random.shuffle(files)
+    for file in files:
+        print("Loading data")
+        examples = np.loadtxt('../data/data' + file + '.txt', delimiter=", ")
+        answers = np.loadtxt('../data/answers' + file + '.txt', delimiter=", ")
+        sizes = len(examples)
+        print("Done Loading")
         
-        currBatch = order[TOTAL_SIZE * i + BATCH_SIZE : TOTAL_SIZE * (i + 1)]
-        print("Trial", int(i/2), ":", net.testBatch(*zip(*currBatch)), "% off")
+        print("Shuffling data")
+        order = list(zip(examples, answers))
+        random.shuffle(order)
+        print("Done Shuffling")
+        
+        currRound += 1
+        print("Starting Test Round:", currRound)
+        for i in range(int(sizes / TOTAL_SIZE)):
+            #run one batch
+            #perform one test
+            currBatch = order[TOTAL_SIZE * i : TOTAL_SIZE * i + BATCH_SIZE]
+            net.miniBatch(*zip(*currBatch))
+            
+            currBatch = order[TOTAL_SIZE * i + BATCH_SIZE : TOTAL_SIZE * (i + 1)]
+            
+            print("Trial", i, ":", net.testBatch(*zip(*currBatch)), "% off")
     
