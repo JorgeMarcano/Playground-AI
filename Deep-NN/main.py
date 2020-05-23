@@ -2,11 +2,10 @@ import numpy as np
 import pickle
 import random
 LEAKY = 0.1
-INPUTS = 17
-OUTPUTS = 2
-SIZES = [INPUTS, 50, 50, 50, OUTPUTS]
+
 LEARNING_RATE = 0.0005
 eta = LEARNING_RATE
+
 BATCH_SIZE = 100
 TEST_SIZE = 10
 TOTAL_SIZE = BATCH_SIZE + TEST_SIZE
