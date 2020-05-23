@@ -1,2 +1,2 @@
-# Stock-AI
-A simple AI for predicting stocks
+# Playground-AI
+A simple AI playground to test out different ML styles
